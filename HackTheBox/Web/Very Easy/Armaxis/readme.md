@@ -1,15 +1,15 @@
-NeoVault
+Armaxis
 ========
 
 ## Challenge Description
 
-NeoVault is a trusted banking application for fund transfers and downloading transaction history. You are invited to explore the application, identify potential vulnerabilities, and recover the hidden flag.
+In the depths of the Frontier, Armaxis powers the enemy’s dominance, dispatching weapons to crush rebellion. Fortified and hidden, it controls vital supply chains. Yet, a flaw whispers of opportunity, a crack to expose its secrets and disrupt their p
 
 ## Solution
 
 The challenge exposes two web interfaces:
 
-- The main NeoVault banking application  
+- The main Armaxis banking application  
 - A separate “email-app” interface
 
 ![Main app](image.png)  
