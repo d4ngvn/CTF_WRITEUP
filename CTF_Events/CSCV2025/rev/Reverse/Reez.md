@@ -136,7 +136,7 @@ print(f"Flag: {flag}")
  ![image](https://hackmd.io/_uploads/H1o-hrQCll.png)
 Ta xem kĩ thì thấy ở có một chỗ khác ngoài `main` xref đến địa chỉ chứa `part1` và `part2`, thử đến đó thì ta thấy hàm sau : 
 ![image](https://hackmd.io/_uploads/BJ-Klr7Ree.png)
-- Đoạn mã này được thực thi trước khi vào hàm `main`, nó kiểm tra xem chương trình có đang trong chế độ `debug` hay không, nếu có thì thanh ghi `raz` trả về 1, còn nếu không thì thanh ghi rax trả về 0.
+- Đoạn mã này được thực thi trước khi vào hàm `main`, nó kiểm tra xem chương trình có đang trong chế độ `debug` hay không, nếu có thì thanh ghi `rax` trả về 1, còn nếu không thì thanh ghi rax trả về 0.
 - Ta thử đặt breakpoint trước lệnh `cmp eax, 1` và đổi thanh ghi `rax` thành 0 để xem điều gì xảy ra:
 ![image](https://hackmd.io/_uploads/rkUrZH7Rxg.png)
 
