@@ -90,7 +90,7 @@ if (isset($_GET['act'])) {
 - Đầu tiên server lấy giá trị của tham số `act`:
     - Nếu `act` = `respawn` -> reset game.
     - Nếu `act` = `move` -> Lấy thêm 2 tham số là `step` (bước đi tiếp theo) và `side` (nhận giá trị `0` hoặc `1` tương ứng bên trái hoặc phải).
-        - Sau đó là một số dòng code để validate 2 tham số vừa truyền vào, tất cả đều được xử lý khá chặt (dùng === thay vì == ). Và nếu đi đúng 39 lần liên tiếp thì ta sẽ nhận được flag.
+        - Sau đó là một số dòng code để validate 2 tham số vừa truyền vào, tất cả đều được xử lý khá chặt (dùng === thay vì == ). Và nếu đi đúng 40 lần liên tiếp thì ta sẽ nhận được flag.
 - Nhận xét : Lúc đầu mình nghĩ là sẽ có 1 lỗi logic ở đâu đó giúp ta bypass và nhận được flag, nhưng sau 1 thời gian dài không tìm thấy manh mối, mình bắt đầu kiểm tra các file còn lại.
     - `style.css` : là 1 file css bình thường, cũng không có gì thú vị.
     - `game.js` : Liên quan đến xử lý game ở phía client, cũng không có gì đáng ngờ.
@@ -118,7 +118,7 @@ EXPOSE 80
 COPY flag.txt /flag.txt
 RUN mv /flag.txt /flag-`cat /proc/sys/kernel/random/uuid`.txt
 ```
-- Vậy tiếp theo chúng ta nên tận dụng lỗi `LFI` như thế nào để solve challenge? Lúc này mình nhớ rằng, còn một cách nữa để đọc được flag, đó chính là chọn đúng ô 39 lần liên tiếp. Vậy làm sao để chọn đúng? Do logic code rất chặt nên ta chỉ còn cách đi đúng từng bước, theo logic game chứ không thể đi đường tắt được. Mà như ta đã biết, đáp án cho mỗi bước đi được lưu ở `$_SESSION['path']`, và nó chắc chắn phải được lưu ở trên server. Lúc đấy mình đặt ra một câu hỏi : "Nếu nội dung của $_SESSION được lưu trên server, vậy nó sẽ được lưu ở path nào?" -> Mình tra google thử :
+- Vậy tiếp theo chúng ta nên tận dụng lỗi `LFI` như thế nào để solve challenge? Lúc này mình nhớ rằng, còn một cách nữa để đọc được flag, đó chính là chọn đúng ô 40 lần liên tiếp. Vậy làm sao để chọn đúng? Do logic code rất chặt nên ta chỉ còn cách đi đúng từng bước, theo logic game chứ không thể đi đường tắt được. Mà như ta đã biết, đáp án cho mỗi bước đi được lưu ở `$_SESSION['path']`, và nó chắc chắn phải được lưu ở trên server. Lúc đấy mình đặt ra một câu hỏi : "Nếu nội dung của $_SESSION được lưu trên server, vậy nó sẽ được lưu ở path nào?" -> Mình tra google thử :
 ![alt text](image-6.png)
 ![alt text](image-4.png)
 ![alt text](image-5.png)
